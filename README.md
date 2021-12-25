@@ -1,2 +1,2 @@
-# Satellite-Xenomai
+# Weather satellite
 Satellite data recovery
