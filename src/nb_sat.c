@@ -72,13 +72,10 @@ void *task(void *arg){
 	struct tm tm = *localtime(&t);
 	bool LOCK = true;
 	int stop_python;
-	PyObject* Module = PyUnicode_FromString((char*)"Meteo");
-	PyObject* librairie = PyImport_Import(Module);
-                             
-	Py_Initialize();                                               
-	//fp = _Py_fopen(filename, "r");
-	//PyRun_SimpleFile(fp, filename);                                
-	//Py_Finalize();                                                 
+	Py_Initialize();
+	PyObject  *Module = PyUnicode_FromString("Meteo");
+	PyObject  *librairie = PyImport_Import(Module);
+                                                                              
 	while(true){    		
 		sleep(1);
 		time(&t);
@@ -93,7 +90,7 @@ void *task(void *arg){
 				//Il n'est pas possible de passer des int à Python mais on peut passer des long
 				PyObject* args = PyTuple_Pack(2,PyLong_FromLong((long)freq),PyLong_FromString(name,NULL,0));	
 				//PyRun_SimpleFile(fp, filename);
-				Py_Finalize();
+				//Py_Finalize();
 				LOCK = false;
 			}
 		}
