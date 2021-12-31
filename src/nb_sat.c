@@ -63,7 +63,7 @@ void *task(void *arg){
 	char filename[] = "METEO.py";                                   
 	FILE *fp;
    	info_radio *infos = (info_radio*) arg;
-	uint32_t freq = infos->freq;
+	uint32_t freq= infos->freq;
 	char *date = infos->date;
 	char *name = infos->name;
 	char *end_date = infos->end_date;
@@ -73,8 +73,8 @@ void *task(void *arg){
 	bool LOCK = true;
 	int stop_python;
 	Py_Initialize();
-	PyObject  *Module = PyUnicode_FromString("Meteo");
-	PyObject  *librairie = PyImport_Import(Module);
+	PyObject *Module = PyUnicode_FromString("test");
+	PyObject *librairie = PyImport_Import(Module);
                                                                               
 	while(true){    		
 		sleep(1);
@@ -87,10 +87,15 @@ void *task(void *arg){
 				pthread_mutex_lock(&RTL2832U);
 				fprintf(stderr,"Lancer le soft et prendre mutex \n");
 				PyObject* myFunction = PyObject_GetAttrString(librairie,(char*)"main");
-				//Il n'est pas possible de passer des int à Python mais on peut passer des long
-				PyObject* args = PyTuple_Pack(2,PyLong_FromLong((long)freq),PyLong_FromString(name,NULL,0));	
-				//PyRun_SimpleFile(fp, filename);
-				//Py_Finalize();
+				//On passe les arguments à la fonction main python
+				//PyObject* args = PyTuple_Pack(2,PyLong_FromLong((long)freq),PyLong_FromString(name,NULL,0));
+				//PyObject* args = Py_BuildValue("(is)", freq, name);
+				PyObject* args = PyTuple_New(freq);
+				PyObject* myResult = PyObject_CallObject(myFunction, args);
+				//PyObject* args = Py_BuildValue("(z)",(char*)"something");
+				fprintf(stderr,"passer\n");		
+				//PrgsyRun_SimpleFile(fp, filename);
+				Py_Finalize();
 				LOCK = false;
 			}
 		}
