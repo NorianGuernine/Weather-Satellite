@@ -8,7 +8,9 @@ import osmosdr
 import signal
 
 class Meteo_sat(gr.top_block):
-    def __init__(self,frequence,name):
+    def __init__(self,name):
+        print("DANS PYTHON")
+        frequence = 13712500
         gr.top_block.__init__(self, "Meteo sat")
         
         self.samp_rate = 1411200
@@ -52,16 +54,16 @@ class Meteo_sat(gr.top_block):
         self.connect((self.osmosdr_source_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_wavfile_sink_0, 0))
 
-def sig_handler(sig=None, frame=None):
-    Acquisition.stop()
-    Acquisition.wait()
-    sys.exit(0)
 
-def main(freq,nom):
-    Acquisition=Meteo_sat(freq,nom)
-    print("Dans Python")
+def main(nom):
+    Acquisition=Meteo_sat(nom)
+    def sig_handler(sig=None, frame=None):
+        Acquisition.stop()
+        Acquisition.wait()
+        sys.exit(0)
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
     Acquisition.start()
+    return 0
 
 
