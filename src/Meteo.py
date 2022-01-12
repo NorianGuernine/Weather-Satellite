@@ -6,6 +6,7 @@ from gnuradio import analog
 import time
 import osmosdr
 import signal
+import datetime
 
 class Meteo_sat(gr.top_block):
     def __init__(self,name):
@@ -55,15 +56,26 @@ class Meteo_sat(gr.top_block):
         self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_wavfile_sink_0, 0))
 
 
-def main(nom):
+def main(nom,date):
+    today=datetime.datetime.now()
+    mois=int(date[0:2])
+    jour=int(date[3:5])
+    heure=int(date[6:8])
+    minutes=int(date[9:11])
+    secondes=int(date[12:14])
+    annee=today.year
+    dt = datetime.datetime(annee,mois,jour,heure,minutes,secondes)
+    sleep=(dt-today).seconds
+
     Acquisition=Meteo_sat(nom)
-    def sig_handler(sig=None, frame=None):
-        Acquisition.stop()
-        Acquisition.wait()
-        sys.exit(0)
-    signal.signal(signal.SIGINT, sig_handler)
-    signal.signal(signal.SIGTERM, sig_handler)
     Acquisition.start()
+
+    time.sleep(sleep)
+    
+    Acquisition.stop()
+    Acquisition.wait()
+    print("fin")
+    #sys.exit(0)
     return 0
 
 
