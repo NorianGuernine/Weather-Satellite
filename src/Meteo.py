@@ -57,6 +57,11 @@ class Meteo_sat(gr.top_block):
 
 
 def main(nom,date):
+    """
+    On commence par convertir la date en entier puis ensuite
+    On lance l'acquisition des données satellite et on attend
+    que la date de fin soit atteinte
+    """
     today=datetime.datetime.now()
     mois=int(date[0:2])
     jour=int(date[3:5])
@@ -74,8 +79,6 @@ def main(nom,date):
     
     Acquisition.stop()
     Acquisition.wait()
-    print("fin")
-    #sys.exit(0)
     return 0
 
 
