@@ -114,7 +114,7 @@ info_radio Config_manuelle(void) {
 			fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
 			getchar();
 			fgets(infos.date,29, stdin);
-            fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
+            		fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
 			fgets(infos.end_date,29, stdin);
 			fprintf(stderr,"%s \n", infos.end_date);
 		}
