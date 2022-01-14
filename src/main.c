@@ -3,24 +3,26 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <Python.h>     //A terme la partie python sera remplacée par du C++
+#include <Python.h>
 #include <time.h>
 #include <signal.h>
-
-void *task(void *arg);//Thread qui enregistre le données satellite
+#include <string.h>
 
 typedef struct info_radio info_radio;
 struct info_radio{	//Structure stockant les informations radios personnelles à chaque thread
-        uint32_t freq;
+    long unsigned int freq;
 	char name[30];
 	char date[30];
 	char end_date[30];
 };
 
+void *task(void *arg);	//Thread qui enregistre le données satellite
+info_radio Lecture_infos(char *filename);	//Fonction qui lit les paramètres enregistrés dans des fichiers
+
 pthread_mutex_t RTL2832U = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char *argv[]){
-	uint8_t i,n,nb_sat,nb_rot=0;
+	/*uint8_t i,n,nb_sat,nb_rot=0;
 	info_radio infos;
 	pthread_t thr;
 
@@ -50,13 +52,14 @@ int main(int argc, char *argv[]){
 	}
 	while(true){
 		sleep(1);
-	}
+	}*/
+	Lecture_infos("NOAA");
 	return 0;
 }
 
 void *task(void *arg){
    	info_radio *infos = (info_radio*) arg;
-	uint32_t freq= infos->freq;
+	long unsigned int freq= infos->freq;
 	char *date = infos->date;
 	char *name = infos->name;
 	char *end_date = infos->end_date;
@@ -88,5 +91,27 @@ void *task(void *arg){
 	//Quand la date de fin d'enregistrement est atteinte le soft python rend la main au programme C
 	fprintf(stderr,"Stopper le soft et rendre mutex \n");
 	pthread_mutex_unlock(&RTL2832U);
-
+	return 0;
 }
+
+info_radio Lecture_infos(char *filename) {
+	/*Lecture du fichier:
+	 * 1ere ligne: nom du satellite
+	 * 2eme ligne: frequence
+	 * 3eme ligne: date de début d"aquisition
+	 * 4eme ligne: date de fin d'acquisition*/
+	FILE *fp;
+	char line[80] = {0};
+	info_radio infs;
+	fp = fopen(filename,"r");
+	if(fp==NULL) {
+		exit(EXIT_FAILURE);
+	}
+	fgets(infs.name, 80, fp);
+	infs.freq=(unsigned int)atoi(fgets(line, 80, fp));
+	fgets(infs.date, 80, fp);
+	fgets(infs.end_date, 80, fp);
+	fclose(fp);
+	return infs;
+}
+
