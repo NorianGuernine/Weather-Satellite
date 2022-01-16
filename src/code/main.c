@@ -22,14 +22,31 @@ info_radio Config_manuelle(void);
 
 pthread_mutex_t RTL2832U = PTHREAD_MUTEX_INITIALIZER;
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
 	info_radio infs;
 	pthread_t thr;
-	infs=Config_manuelle();
-	if(pthread_create(&thr, NULL, task, &infs) != 0){
-		fprintf(stderr, "Error during pthread_create() \n");
-		exit(EXIT_FAILURE);
-		return -1;
+	uint8_t nb_sat,i,n=0;
+	if(argc > 0) {
+		for(n=0;n<argc;n++) {
+			infs=Lecture_infos(argv[i]);
+			if(pthread_create(&thr, NULL, task, &infs) != 0){
+				fprintf(stderr, "Error during pthread_create() \n");
+				exit(EXIT_FAILURE);
+				return -1;
+			}
+		}
+	}
+	else {
+		fprintf(stderr,"Please enter the number of satellites: \n");
+		scanf("%"SCNu8,&nb_sat);	//%d ne peut pas être utilisé car enregistre sur 32 bits au lieu de 8
+		for(i=0;i<nb_sat;i++) {
+			infs=Config_manuelle();
+			if(pthread_create(&thr, NULL, task, &infs) != 0){
+				fprintf(stderr, "Error during pthread_create() \n");
+				exit(EXIT_FAILURE);
+				return -1;
+			}
+		}
 	}
 	while(true){
 		sleep(1);
@@ -57,7 +74,7 @@ void *task(void *arg){
 		sleep(1);
 		time(&t);
 		tm = *localtime(&t);
-		fprintf(stderr,"%s",infos->date);
+		fprintf(stderr,"%s",infos->name);
 		sprintf(sys_date,"%02d-%02d-%02d-%02d-%02d\n",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
 	}while(strcmp(date,sys_date) > 0);
 	//On enregistre les données satellite en lançant le soft python
@@ -97,28 +114,20 @@ info_radio Lecture_infos(char *filename) {
 }
 
 info_radio Config_manuelle(void) {
-	uint8_t i,n,nb_sat,nb_rot=0;
 	info_radio infos;
 
-	fprintf(stderr,"Please enter the number of satellites: \n");
-	scanf("%"SCNu8,&nb_sat);	//%d ne peut pas être utilisé car enregistre sur 32 bits au lieu de 8
-	for(i=0;i<nb_sat;i++){
-		fprintf(stderr,"Please enter the name of the satellite \n");
-		getchar();	//sert a absorber le \n car scanf ne l'absorbe pas
-		fgets(infos.name, 29, stdin);
-		fprintf(stderr, "Please enter the frequency \n");
-		scanf("%lu",&(infos.freq));
-		fprintf(stderr,"Please enter the number of rotation \n");
-		scanf("%"SCNu8,&nb_rot);
-		for(n=0;n<nb_rot;n++){
-			fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
-			getchar();
-			fgets(infos.date,29, stdin);
-            fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
-			fgets(infos.end_date,29, stdin);
-			fprintf(stderr,"%s \n", infos.end_date);
-		}
-	}
+	fprintf(stderr,"Please enter the name of the satellite \n");
+	getchar();	//sert a absorber le \n car scanf ne l'absorbe pas
+	fgets(infos.name, 29, stdin);
+	fprintf(stderr, "Please enter the frequency \n");
+	scanf("%lu",&(infos.freq));
+	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
+	getchar();
+	fgets(infos.date,29, stdin);
+	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
+	fgets(infos.end_date,29, stdin);
+	fprintf(stderr,"%s \n", infos.end_date);
+
 	return infos;
 }
 
