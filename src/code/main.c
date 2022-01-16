@@ -116,7 +116,6 @@ info_radio Lecture_infos(char *filename) {
 info_radio Config_manuelle(void) {
 	info_radio infos;
 
-<<<<<<< HEAD:src/code/main.c
 	fprintf(stderr,"Please enter the name of the satellite \n");
 	getchar();	//sert a absorber le \n car scanf ne l'absorbe pas
 	fgets(infos.name, 29, stdin);
@@ -129,27 +128,6 @@ info_radio Config_manuelle(void) {
 	fgets(infos.end_date,29, stdin);
 	fprintf(stderr,"%s \n", infos.end_date);
 
-=======
-	fprintf(stderr,"Please enter the number of satellites: \n");
-	scanf("%"SCNu8,&nb_sat);	//%d ne peut pas être utilisé car enregistre sur 32 bits au lieu de 8
-	for(i=0;i<nb_sat;i++){
-		fprintf(stderr,"Please enter the name of the satellite \n");
-		getchar();	//sert a absorber le \n car scanf ne l'absorbe pas
-		fgets(infos.name, 29, stdin);
-		fprintf(stderr, "Please enter the frequency \n");
-		scanf("%lu",&(infos.freq));
-		fprintf(stderr,"Please enter the number of rotation \n");
-		scanf("%"SCNu8,&nb_rot);
-		for(n=0;n<nb_rot;n++){
-			fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
-			getchar();
-			fgets(infos.date,29, stdin);
-            		fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
-			fgets(infos.end_date,29, stdin);
-			fprintf(stderr,"%s \n", infos.end_date);
-		}
-	}
->>>>>>> 46cfbd465cb10978bf5bcbb761753f4c449ad9d7:src/main.c
 	return infos;
 }
 
