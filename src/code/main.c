@@ -10,7 +10,7 @@
 
 typedef struct info_radio info_radio;
 struct info_radio{	//Structure stockant les informations radios personnelles à chaque thread
-    long unsigned int freq;
+    unsigned long freq;
 	char name[30];
 	char date[30];
 	char end_date[30];
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
 void *task(void *arg){
    	info_radio *infos = (info_radio*) arg;
-	long unsigned int freq= infos->freq;
+	unsigned long freq= infos->freq;
 	char *date = infos->date;
 	char *name = infos->name;
 	char *end_date = infos->end_date;
@@ -83,7 +83,7 @@ void *task(void *arg){
 	pName = PyUnicode_FromString((char*)"Meteo");
 	pModule = PyImport_Import(pName);
 	pFunc = PyObject_GetAttrString(pModule, (char*)"main");
-	pArgs = Py_BuildValue("(ssi)",name,end_date,freq);
+	pArgs = Py_BuildValue("(ssk)",name,end_date,freq);
 	pValue = PyObject_CallObject(pFunc, pArgs);
 	Py_Finalize();
 	//Quand la date de fin d'enregistrement est atteinte le soft python rend la main au programme C
@@ -106,7 +106,7 @@ info_radio Lecture_infos(char *filename) {
 		exit(EXIT_FAILURE);
 	}
 	fgets(infs.name, 80, fp);
-	infs.freq=(unsigned int)atoi(fgets(line, 80, fp));
+	infs.freq=(unsigned long)atoi(fgets(line, 80, fp));
 	fgets(infs.date, 80, fp);
 	fgets(infs.end_date, 80, fp);
 	fclose(fp);
