@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
 	info_radio infs;
 	pthread_t thr;
 	uint8_t nb_sat,i,n=0;
-	if(argc > 0) {
-		for(n=0;n<argc;n++) {
+	if(argc > 1) {
+		for(n=1;n<=argc;n++) {
 			infs=Lecture_infos(argv[i]);
 			if(pthread_create(&thr, NULL, task, &infs) != 0){
 				fprintf(stderr, "Error during pthread_create() \n");
@@ -83,7 +83,7 @@ void *task(void *arg){
 	pName = PyUnicode_FromString((char*)"Meteo");
 	pModule = PyImport_Import(pName);
 	pFunc = PyObject_GetAttrString(pModule, (char*)"main");
-	pArgs = Py_BuildValue("(ss)",name,end_date);
+	pArgs = Py_BuildValue("(ssi)",name,end_date,freq);
 	pValue = PyObject_CallObject(pFunc, pArgs);
 	Py_Finalize();
 	//Quand la date de fin d'enregistrement est atteinte le soft python rend la main au programme C
