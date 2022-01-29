@@ -6,7 +6,7 @@ from gnuradio import analog
 import time
 import osmosdr
 import signal
-import datetime
+import begin_datetime
 
 class Meteo_sat(gr.top_block):
     def __init__(self,name,frequence):
@@ -55,29 +55,30 @@ class Meteo_sat(gr.top_block):
         self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_wavfile_sink_0, 0))
 
 
-def main(nom,date,frequence):
+def main(nom,begin_date,frequence):
     """
-    On commence par convertir la date en entier puis ensuite
+    On commence par convertir la begin_date en entier puis ensuite
     On lance l'acquisition des données satellite et on attend
-    que la date de fin soit atteinte
+    que la begin_date de fin soit atteinte
     """
-    today=datetime.datetime.now()
-    mois=int(date[0:2])
-    jour=int(date[3:5])
-    heure=int(date[6:8])
-    minutes=int(date[9:11])
-    secondes=int(date[12:14])
-    annee=today.year
-    dt = datetime.datetime(annee,mois,jour,heure,minutes,secondes)
-    sleep=(dt-today).seconds
-
-    Acquisition=Meteo_sat(nom,frequence)
-    Acquisition.start()
-
-    time.sleep(sleep)
-    
-    Acquisition.stop()
-    Acquisition.wait()
+##    today=begin_datetime.begin_datetime.now()
+##    mois=int(begin_date[0:2])
+##    jour=int(begin_date[3:5])
+##    heure=int(begin_date[6:8])
+##    minutes=int(begin_date[9:11])
+##    secondes=int(begin_date[12:14])
+##    annee=today.year
+##    dt = begin_datetime.begin_datetime(annee,mois,jour,heure,minutes,secondes)
+##    sleep=(dt-today).seconds
+##
+##    Acquisition=Meteo_sat(nom,frequence)
+##    Acquisition.start()
+##
+##    time.sleep(sleep)
+##    
+##    Acquisition.stop()
+##    Acquisition.wait()
+    print("Sortie de Python")
     return 0
 
 
