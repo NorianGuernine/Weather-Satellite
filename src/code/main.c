@@ -16,7 +16,6 @@ int main(int argc, char *argv[])
 	uint8_t nb_sat,i,n=0;
 	mqd_t mq;
 	pid_t pid;
-	int result_close_mq;
 
 	mq=mq_open(QUEUE_NAME, O_WRONLY | O_CREAT, QUEUE_PRIORITY, NULL);
 	if(mq == (mqd_t)-1) {
@@ -60,14 +59,6 @@ int main(int argc, char *argv[])
 
 	if(pid == 0)
 		Enregistrement();
-	else {
-		result_close_mq = mq_close(mq);
-		if(result_close_mq == -1)
-			perror("mq_close");
-		result_close_mq = mq_unlink(QUEUE_NAME);
-		if(result_close_mq == -1)
-			perror("mq_unlink");
-	}
 
 
 	return EXIT_SUCCESS;

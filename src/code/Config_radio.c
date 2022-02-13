@@ -31,7 +31,6 @@ info_radio Lecture_infos(char *filename)
 	fgets(infs.begin_date, 80, fp);
 	fgets(infs.end_date, 80, fp);
 	fclose(fp);
-	fprintf(stderr,"%s", infs.begin_date);
 	return infs;
 }
 
@@ -48,7 +47,6 @@ info_radio Config_manuelle(void)
 	fgets(infos.begin_date,29, stdin);
 	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
 	fgets(infos.end_date,29, stdin);
-	fprintf(stderr,"%s \n", infos.end_date);
 
 	return infos;
 }
@@ -63,7 +61,6 @@ int Enregistrement(void)
 	unsigned int priority;
 	struct mq_attr attr;
 	sem_t *RTL2832U;
-	int result_close_mq;
 
 	mq=mq_open(QUEUE_NAME, O_RDONLY);
 	if(mq == (mqd_t) -1) {
@@ -81,10 +78,6 @@ int Enregistrement(void)
 		exit(EXIT_FAILURE);
 	}
 	info_radio *infs = (info_radio *)buffer;
-
-	result_close_mq = mq_close(mq);
-	if(result_close_mq == -1)
-		perror("mq_close");
 
 	RTL2832U = sem_open(SEMAPHORE_NAME, O_RDWR);
 	if(RTL2832U == SEM_FAILED) {
