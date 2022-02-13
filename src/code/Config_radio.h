@@ -12,14 +12,14 @@
 #define MEMORY_MODE 0600
 
 typedef struct info_radio info_radio;
-struct info_radio {	//Structure stockant les informations radios personnelles à chaque thread
+struct info_radio {
 	unsigned long freq;
 	char name[NB_MAX_CHARACTERS];
 	char begin_date[NB_MAX_CHARACTERS];
 	char end_date[NB_MAX_CHARACTERS];
 };
 
-info_radio Lecture_infos(char *filename);	//Fonction qui lit les paramètres enregistrés dans des fichiers
+info_radio Lecture_infos(char *filename);
 info_radio Config_manuelle(void);
 int Enregistrement(void);
 

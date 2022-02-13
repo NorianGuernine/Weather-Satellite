@@ -17,7 +17,8 @@ info_radio Lecture_infos(char *filename)
 	 * 1ere ligne: nom du satellite
 	 * 2eme ligne: frequence
 	 * 3eme ligne: begin_date de début d"aquisition
-	 * 4eme ligne: begin_date de fin d'acquisition*/
+	 * 4eme ligne: end_date de fin d'acquisition*/
+
 	FILE *fp;
 	char line[80] = {0};
 	info_radio infs;
@@ -30,6 +31,7 @@ info_radio Lecture_infos(char *filename)
 	fgets(infs.begin_date, 80, fp);
 	fgets(infs.end_date, 80, fp);
 	fclose(fp);
+	fprintf(stderr,"%s", infs.begin_date);
 	return infs;
 }
 
@@ -41,10 +43,10 @@ info_radio Config_manuelle(void)
 	fgets(infos.name, 29, stdin);
 	fprintf(stderr, "Please enter the frequency \n");
 	scanf("%lu",&(infos.freq));
-	fprintf(stderr,"Enter the begin_date of revolution (format = mm-dd-hh-minmin-ss) \n");
+	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
 	getchar();
 	fgets(infos.begin_date,29, stdin);
-	fprintf(stderr,"Enter the begin_date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
+	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
 	fgets(infos.end_date,29, stdin);
 	fprintf(stderr,"%s \n", infos.end_date);
 
@@ -61,6 +63,7 @@ int Enregistrement(void)
 	unsigned int priority;
 	struct mq_attr attr;
 	sem_t *RTL2832U;
+	int result_close_mq;
 
 	mq=mq_open(QUEUE_NAME, O_RDONLY);
 	if(mq == (mqd_t) -1) {
@@ -78,6 +81,10 @@ int Enregistrement(void)
 		exit(EXIT_FAILURE);
 	}
 	info_radio *infs = (info_radio *)buffer;
+
+	result_close_mq = mq_close(mq);
+	if(result_close_mq == -1)
+		perror("mq_close");
 
 	RTL2832U = sem_open(SEMAPHORE_NAME, O_RDWR);
 	if(RTL2832U == SEM_FAILED) {
@@ -99,12 +106,14 @@ int Enregistrement(void)
 	PyObject* path = PyObject_GetAttrString(sys, "path");
 	PyList_Insert(path, 0, PyUnicode_FromString("."));
 
+	//On attend le début de la begin_date d'enregistrement
 	do {
 		sleep(1);
 		time(&t);
 		tm = *localtime(&t);
 		sprintf(sys_date,"%02d-%02d-%02d-%02d-%02d\n",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
-	} while(strcmp(infs->begin_date,sys_date) > 0);	//On attend le début de la begin_date d'enregistrement
+	} while(strcmp(infs->begin_date,sys_date) > 0);
+
 	//On enregistre les données satellite en lançant le soft python
 	fprintf(stderr,"Lancer le soft et prendre mutex \n");
 	pName = PyUnicode_FromString((char*)"Meteo");
@@ -113,10 +122,13 @@ int Enregistrement(void)
 	pArgs = Py_BuildValue("(ssi)",infs->name,infs->end_date,infs->freq);
 	pValue = PyObject_CallObject(pFunc, pArgs);
 	Py_Finalize();
+
 	//Quand la begin_date de fin d'enregistrement est atteinte le soft python rend la main au programme C
 	fprintf(stderr,"Stopper le soft et rendre mutex \n");
 	sem_post(RTL2832U);
 
 	return EXIT_SUCCESS;
 }
+
+
 
