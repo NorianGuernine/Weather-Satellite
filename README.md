@@ -16,10 +16,10 @@ I also made a system image for a Raspberry pi 4 with yocto. The system image is 
 
 #### First way
 Create a file for each recording you want to make. The file must contain the following elements:
--name
--frequency in Hz
--Recording start date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
--Recording end date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
+* name
+* frequency in Hz
+* Recording start date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
+* Recording end date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
 ex:
 
 ```
