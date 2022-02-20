@@ -16,10 +16,10 @@ I also made a system image for a Raspberry pi 4 with yocto. The system image is 
 
 #### First way
 Create a file for each recording you want to make. The file must contain the following elements:
--name
--frequency in Hz
--Recording start date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
--Recording end date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
+* name
+* frequency in Hz
+* Recording start date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
+* Recording end date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
 ex:
 
 ```
@@ -45,18 +45,18 @@ Please enter the name of the satellite
 noaa19
 Please enter the frequency 
 137910000
-Enter the date of revolution (format = mm-dd-hh-minmin-ss) 
+Enter the start date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-08-31-00
-Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) 
+Enter the end date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-08-37-00
 
 Please enter the name of the satellite 
 noaa18
 Please enter the frequency 
 137912500
-Enter the date of revolution (format = mm-dd-hh-minmin-ss) 
+Enter the start date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-10-16-00
-Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) 
+Enter the end date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-10-29-00
 ```
 
