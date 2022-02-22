@@ -1,6 +1,18 @@
-
 #ifndef CONFIG_RADIO_H_
 #define CONFIG_RADIO_H_
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
+#include <Python.h>
+#include <time.h>
+#include <string.h>
+#include <mqueue.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
 #define NB_MAX_CHARACTERS 30
 #define SIZE_MSG_TO_LOG 61
@@ -22,9 +34,10 @@ struct info_radio {
 	char end_date[NB_MAX_CHARACTERS];
 };
 
-info_radio Lecture_infos(char *filename);
-info_radio Config_manuelle(void);
-int Enregistrement(void);
+info_radio read_infos(char *filename);
+info_radio manual_config(void);
+int record(void);
 int logfile(char *, char *);
+void send_queue(mqd_t, info_radio);
 
 #endif /* CONFIG_RADIO_H_ */

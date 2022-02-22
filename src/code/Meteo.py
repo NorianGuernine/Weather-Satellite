@@ -10,7 +10,6 @@ import datetime
 
 class Meteo_sat(gr.top_block):
     def __init__(self,name,frequence):
-        print("DANS PYTHON")
         gr.top_block.__init__(self, "Meteo sat")
         
         self.samp_rate = 1411200
@@ -78,7 +77,6 @@ def main(nom,end_date,frequence):
     
     Acquisition.stop()
     Acquisition.wait()
-    print("Sortie de Python")
     return 0
 
 

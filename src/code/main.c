@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <string.h>
-#include <mqueue.h>
-#include <semaphore.h>
 #include "Config_radio.h"
 
 int main(int argc, char *argv[])
@@ -28,19 +19,14 @@ int main(int argc, char *argv[])
 		logfile(MAIN_PROCESS_NAME,"input arguments");
 		for(n=1;n<=argc;n++) {
 			logfile(MAIN_PROCESS_NAME,"Reading the parameters from the file");
-			infs=Lecture_infos(argv[n]);
+			infs=read_infos(argv[n]);
 			logfile(MAIN_PROCESS_NAME,"fork");
 			pid=fork();
-			//Si on est dans un process child alors on sort de la boucle pour ne pars créer de grandchild
+			//Si on est dans un process child alors on sort de la boucle pour ne pas créer de grandchild
 			if(pid == 0)
 				break;
 			else {
-				logfile(MAIN_PROCESS_NAME,"Attempt to send message queue infs");
-				if(mq_send(mq, (const char *) &infs, sizeof(infs), QUEUE_PRIORITY) != 0) {
-					perror("mq_send");
-					logfile(MAIN_PROCESS_NAME,strerror(errno));
-					exit(EXIT_FAILURE);
-				}
+				send_queue(mq,infs);
 			}
 		}
 	} else {
@@ -49,27 +35,20 @@ int main(int argc, char *argv[])
 		//%d ne peut pas être utilisé car enregistre sur 32 bits au lieu de 8
 		scanf("%"SCNu8,&nb_sat);
 		for(i=0;i<nb_sat;i++) {
-			infs=Config_manuelle();
+			infs=manual_config();
 			logfile(MAIN_PROCESS_NAME,"fork");
 			pid=fork();
 			//Si on est dans un process child alors on sort de la boucle pour ne pars créer de grandchild
 			if(pid == 0)
 				break;
 			else {
-				logfile(MAIN_PROCESS_NAME,"Attempt to send message queue infs");
-				if(mq_send(mq, (const char *) &infs, sizeof(infs), QUEUE_PRIORITY) != 0) {
-					perror("mq_send");
-					logfile(MAIN_PROCESS_NAME,strerror(errno));
-					exit(EXIT_FAILURE);
-				}
+				send_queue(mq,infs);
 			}
 		}
-
 	}
 
 	if(pid == 0)
-		Enregistrement();
-
+		record();
 
 	return EXIT_SUCCESS;
 }

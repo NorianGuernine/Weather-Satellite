@@ -1,18 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <Python.h>
-#include <time.h>
-#include <string.h>
-#include <mqueue.h>
-#include <semaphore.h>
-#include <fcntl.h>
 #include "Config_radio.h"
 
-info_radio Lecture_infos(char *filename)
+info_radio read_infos(char *filename)
 {
 	/*Lecture du fichier:
 	 * 1ere ligne: nom du satellite
@@ -37,7 +25,7 @@ info_radio Lecture_infos(char *filename)
 	return infs;
 }
 
-info_radio Config_manuelle(void)
+info_radio manual_config(void)
 {
 	info_radio infos;
 	fprintf(stderr,"Please enter the name of the satellite \n");
@@ -53,7 +41,7 @@ info_radio Config_manuelle(void)
 
 	return infos;
 }
-int Enregistrement(void)
+int record(void)
 {
 	char sys_date[16];
 	time_t t = time(NULL);
@@ -69,7 +57,7 @@ int Enregistrement(void)
 	pid_t pid;
 
 	pid = getpid();
-	//On stocke le numéro du PID dans string_pid_number
+	//On stock le numéro du PID dans string_pid_number
 	sprintf(string_pid_number,"[%d]",pid);
 	logfile(string_pid_number,"Attempt to open message queue");
 	mq=mq_open(QUEUE_NAME, O_RDONLY);
@@ -119,14 +107,13 @@ int Enregistrement(void)
 	sem_wait(RTL2832U);
 	logfile(string_pid_number,"Taking the semaphore");
 
-
 	Py_Initialize();
-	PyObject *pName, *pModule, *pFunc, *pArgs,*pValue;
+	PyObject *python_name, *python_module, *python_func, *python_args,*python_value;
 	PyObject* sys = PyImport_ImportModule("sys");
 	PyObject* path = PyObject_GetAttrString(sys, "path");
 	PyList_Insert(path, 0, PyUnicode_FromString("."));
 
-	//On attend le début de la begin_date d'enregistrement
+	//On attend le début de la begin_date d'record
 	logfile(string_pid_number,"Waiting for the recording date");
 	do {
 		sleep(1);
@@ -137,32 +124,32 @@ int Enregistrement(void)
 
 	//On enregistre les données satellite en lançant le soft python
 	logfile(string_pid_number,"Configuring the python interpreter");
-	pName = PyUnicode_FromString((char*)"Meteo");
-	if(pName == NULL) {
+	python_name = PyUnicode_FromString((char*)"Meteo");
+	if(python_name == NULL) {
 		fprintf(stderr,"pName in python (PyUnicode_FromString) configuration return NULL");
 		logfile(string_pid_number,"pName (PyUnicode_FromString) in python configuration return NULL");
 		exit(EXIT_FAILURE);
 	}
-	pModule = PyImport_Import(pName);
-	if(pModule == NULL) {
+	python_module = PyImport_Import(python_name);
+	if(python_module == NULL) {
 		fprintf(stderr,"pModule in python (PyImport_Import) configuration return NULL");
 		logfile(string_pid_number,"pModule in python (PyImport_Import) configuration return NULL");
 		exit(EXIT_FAILURE);
 	}
-	pFunc = PyObject_GetAttrString(pModule, (char*)"main");
-	if(pFunc == NULL) {
+	python_func = PyObject_GetAttrString(python_module, (char*)"main");
+	if(python_func == NULL) {
 		fprintf(stderr,"pFunc in python (PyObject_GetAttrString) configuration return NULL");
 		logfile(string_pid_number,"pFunc in python (PyObject_GetAttrString) configuration return NULL");
 		exit(EXIT_FAILURE);
 	}
-	pArgs = Py_BuildValue("(ssi)",infs->name,infs->end_date,infs->freq);
-	if(pArgs == NULL) {
+	python_args = Py_BuildValue("(ssi)",infs->name,infs->end_date,infs->freq);
+	if(python_args == NULL) {
 		fprintf(stderr,"pArgs in python (Py_BuildValue) configuration return NULL");
 		logfile(string_pid_number,"pArgs in python (Py_BuildValue) configuration return NULL");
 		exit(EXIT_FAILURE);
 	}
-	pValue = PyObject_CallObject(pFunc, pArgs);
-	if(pValue == NULL) {
+	python_value = PyObject_CallObject(python_func, python_args);
+	if(python_value == NULL) {
 		fprintf(stderr,"pValue in python (PyObject_CallObject) configuration return NULL");
 		logfile(string_pid_number,"pValue in python (PyObject_CallObject) configuration return NULL");
 		exit(EXIT_FAILURE);
@@ -170,7 +157,7 @@ int Enregistrement(void)
 	logfile(string_pid_number,"Stopping the python interpreter");
 	Py_Finalize();
 
-	//Quand la begin_date de fin d'enregistrement est atteinte le soft python rend la main au programme C
+	//Quand la begin_date de fin d'record est atteinte le soft python rend la main au programme C
 	sem_post(RTL2832U);
 	logfile(string_pid_number,"Semaphore released");
 
@@ -224,5 +211,14 @@ int logfile(char * what_process, char * msg)
 	return EXIT_SUCCESS;
 }
 
+void send_queue(mqd_t mq, info_radio infs)
+{
+	logfile(MAIN_PROCESS_NAME,"Attempt to send message queue infs");
+	if(mq_send(mq, (const char *) &infs, sizeof(infs), QUEUE_PRIORITY) != 0) {
+		perror("mq_send");
+		logfile(MAIN_PROCESS_NAME,strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+}
 
 
