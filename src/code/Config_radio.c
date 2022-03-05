@@ -11,16 +11,67 @@ info_radio read_infos(char *filename)
 	FILE *fp;
 	char line[80] = {0};
 	info_radio infs;
+	int return_input_date = 0;
+	int day, month, hour, min = 100;
+
 	fp = fopen(filename,"r");
 	logfile(MAIN_PROCESS_NAME,"Attempt to read parameter files");
-	if(fp==NULL) {
+
+	if (fp==NULL) {
 		logfile(MAIN_PROCESS_NAME,"Attempting to read parameter files returns null");
+		fprintf(stderr,"Attempting to read parameter files returns null\n");
 		exit(EXIT_FAILURE);
 	}
-	fgets(infs.name, 80, fp);
-	infs.freq=(unsigned long)atoi(fgets(line, 80, fp));
-	fgets(infs.begin_date, 80, fp);
-	fgets(infs.end_date, 80, fp);
+	if (fgets(infs.name, 80, fp) == NULL) {
+		logfile(MAIN_PROCESS_NAME,"Attempting to read name returns null");
+		fprintf(stderr,"Attempting to read name returns null\n");
+		exit(EXIT_FAILURE);
+	}
+	if(strlen(infs.name) <= 1) {
+		logfile(MAIN_PROCESS_NAME,"Name for the file is too small");
+		fprintf(stderr,"Name for the file (%s) is too small\n",infs.name);
+		exit(EXIT_FAILURE);
+	}
+
+	if (fgets(line, 80, fp) == NULL) {
+		logfile(MAIN_PROCESS_NAME,"Attempting to read frequency returns null");
+		fprintf(stderr,"Attempting to read frequency returns null\n");
+		exit(EXIT_FAILURE);
+	}
+
+	infs.freq=(unsigned long)atoi(line);
+	if (infs.freq == 0) {
+		logfile(MAIN_PROCESS_NAME,"Frequency returns 0");
+		fprintf(stderr,"Frequency returns 0\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(fgets(infs.begin_date, 80, fp) == NULL) {
+		logfile(MAIN_PROCESS_NAME,"Attempting to read start date returns null");
+		fprintf(stderr,"Attempting to read begin date returns null\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return_input_date = sscanf(infs.begin_date, "%d %d %d %d", &month, &day, &hour, &min);
+	if(return_input_date != 4 || strlen(infs.begin_date) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
+		logfile(MAIN_PROCESS_NAME,"Wrong start date entered by user");
+		fprintf(stderr,"Wrong start date entered by user\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(fgets(infs.end_date, 11, fp) == NULL) {
+		logfile(MAIN_PROCESS_NAME,"Attempting to read end date returns null");
+		fprintf(stderr,"Attempting to read end date returns null\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return_input_date = sscanf(infs.end_date, "%d %d %d %d", &month, &day, &hour, &min);
+	if(return_input_date != 4 || strlen(infs.end_date) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
+		logfile(MAIN_PROCESS_NAME,"Wrong end date entered by user");
+		fprintf(stderr,"Wrong end date entered by user\n");
+		exit(EXIT_FAILURE);
+	}
+
 	fclose(fp);
 	return infs;
 }
@@ -58,9 +109,9 @@ info_radio manual_config(void)
 			good_frequency = true;
 	} while(!good_frequency);
 
-	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
+	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin) \n");
 	ask_for_date(infos.begin_date);
-	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
+	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin) \n");
 	ask_for_date(infos.end_date);
 
 	return infos;
@@ -142,7 +193,7 @@ int record(void)
 		sleep(1);
 		time(&t);
 		tm = *localtime(&t);
-		sprintf(sys_date,"%02d-%02d-%02d-%02d-%02d\n",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
+		sprintf(sys_date,"%02d-%02d-%02d-%02d",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
 	} while(strcmp(infs->begin_date,sys_date) > 0);
 
 	/*Recording of satellite data, the recording of satellite data is done in the python part.*/
@@ -211,7 +262,7 @@ int logfile(char * what_process, char * msg)
 	//Si accès successfull
 	tm = *localtime(&t);
 
-	sprintf(date_logfile,"[%02d:%02d:%02d:%02d:%02d] ",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
+	sprintf(date_logfile,"[%02d:%02d:%02d:%02d] ",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
 	assert(msg_to_write == NULL);
 	//+3 for considering both \n and the \0 in the end of message
 	size_msg = strlen(date_logfile) + strlen(what_process) + strlen(msg) + 3;
