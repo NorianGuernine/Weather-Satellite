@@ -2,11 +2,11 @@
 
 info_radio read_infos(char *filename)
 {
-	/*Lecture du fichier:
-	 * 1ere ligne: nom du satellite
-	 * 2eme ligne: frequence
-	 * 3eme ligne: begin_date de début d"aquisition
-	 * 4eme ligne: end_date de fin d'acquisition*/
+	/*Reading the file:
+	 * 1st line: satellite name
+	 * 2nd line: frequency
+	 * 3rd line: acquisition start date
+	 * 4th line: acquisition end date*/
 
 	FILE *fp;
 	char line[80] = {0};
@@ -28,16 +28,40 @@ info_radio read_infos(char *filename)
 info_radio manual_config(void)
 {
 	info_radio infos;
-	fprintf(stderr,"Please enter the name of the satellite \n");
-	getchar();	//sert a absorber le \n car scanf ne l'absorbe pas
-	fgets(infos.name, 29, stdin);
-	fprintf(stderr, "Please enter the frequency \n");
-	scanf("%lu",&(infos.freq));
+	char string[NB_MAX_CHARACTERS] = "";
+	bool good_frequency = false;
+
+	do {
+		fprintf(stderr,"Please enter the name of the satellite \n");
+		input(infos.name);
+
+		if(strlen(infos.name) <= 1) {
+			fprintf(stderr,"Not enough characters \n");
+			if(!ask_if_enter_again()) {
+				infos.name[0] = '\0';
+				return infos;
+			}
+		}
+	} while(strlen(infos.name) <= 1);
+
+	do {
+		fprintf(stderr, "Please enter the frequency \n");
+		input(string);
+		if(sscanf(string, "%lu", &(infos.freq)) != 1) {
+			fprintf(stderr,"Incorrect value \n");
+			if(ask_if_enter_again()) {
+				infos.freq = 0;
+				return infos;
+			}
+		}
+		else
+			good_frequency = true;
+	} while(!good_frequency);
+
 	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin-ss) \n");
-	getchar();
-	fgets(infos.begin_date,29, stdin);
+	ask_for_date(infos.begin_date);
 	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin-ss) \n");
-	fgets(infos.end_date,29, stdin);
+	ask_for_date(infos.end_date);
 
 	return infos;
 }
@@ -57,7 +81,7 @@ int record(void)
 	pid_t pid;
 
 	pid = getpid();
-	//On stock le numéro du PID dans string_pid_number
+	//storing PID number in string_pid_number
 	sprintf(string_pid_number,"[%d]",pid);
 	logfile(string_pid_number,"Attempt to open message queue");
 	mq=mq_open(QUEUE_NAME, O_RDONLY);
@@ -80,12 +104,11 @@ int record(void)
 		exit(EXIT_FAILURE);
 	}
 	info_radio *infs = (info_radio *)buffer;
-	//Ce message vers le log est enregistré dans une variable pour y rajouter le nom du fichier
+	//This message to the log is saved in a variable to add the file name
 	sprintf(msg_to_log,"This process write to the file %s", infs->name);
 	logfile(string_pid_number,msg_to_log);
 
-	/*On commence par essayer d'avoir accès à la semaphore
-	 * si on ne peut pas alors on la crée*/
+	//try to get access to semaphore and if not possible then create it
 
 	logfile(string_pid_number,"Attempt to get acces to the semaphore");
 
@@ -113,7 +136,7 @@ int record(void)
 	PyObject* path = PyObject_GetAttrString(sys, "path");
 	PyList_Insert(path, 0, PyUnicode_FromString("."));
 
-	//On attend le début de la begin_date d'record
+	//Waiting for the recording date stored in begin_date
 	logfile(string_pid_number,"Waiting for the recording date");
 	do {
 		sleep(1);
@@ -122,7 +145,7 @@ int record(void)
 		sprintf(sys_date,"%02d-%02d-%02d-%02d-%02d\n",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
 	} while(strcmp(infs->begin_date,sys_date) > 0);
 
-	//On enregistre les données satellite en lançant le soft python
+	/*Recording of satellite data, the recording of satellite data is done in the python part.*/
 	logfile(string_pid_number,"Configuring the python interpreter");
 	python_name = PyUnicode_FromString((char*)"Meteo");
 	if(python_name == NULL) {
@@ -157,7 +180,7 @@ int record(void)
 	logfile(string_pid_number,"Stopping the python interpreter");
 	Py_Finalize();
 
-	//Quand la begin_date de fin d'record est atteinte le soft python rend la main au programme C
+	//When the end date of recording is reached, the python software returns control to the C program
 	sem_post(RTL2832U);
 	logfile(string_pid_number,"Semaphore released");
 
@@ -185,12 +208,12 @@ int logfile(char * what_process, char * msg)
 		if(errno != EINTR)
 			return -1;
 
-	//Si accès réussie
+	//Si accès successfull
 	tm = *localtime(&t);
 
 	sprintf(date_logfile,"[%02d:%02d:%02d:%02d:%02d] ",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
 	assert(msg_to_write == NULL);
-	//+3 pour prendre en compte les deux \n et le \0 dans le message final
+	//+3 for considering both \n and the \0 in the end of message
 	size_msg = strlen(date_logfile) + strlen(what_process) + strlen(msg) + 3;
 	msg_to_write = (char *) malloc(size_msg * sizeof(char));
 	if(msg_to_write == NULL) {
@@ -199,7 +222,7 @@ int logfile(char * what_process, char * msg)
 	}
 	assert(msg_to_write != NULL);
 	sprintf(msg_to_write,"%s%s%s\n\n", date_logfile, what_process, msg);
-	//Pour la taille du message size_msg_to_write on ne prend pas en compte le char \0 à la fin
+	//For the size_msg_to_write message size, ignore the char \0 at the end
 	size_msg_to_write = strlen(msg_to_write);
 	write(logfile, msg_to_write, size_msg_to_write * sizeof(char));
 	close(logfile);
@@ -220,5 +243,85 @@ void send_queue(mqd_t mq, info_radio infs)
 		exit(EXIT_FAILURE);
 	}
 }
+
+int ask_for_date(char *string)
+{
+	bool format_date_ok = false;
+	int return_input_date = 0;
+	int day, month, hour, min = 100;
+	do {
+		input(string);
+		return_input_date = sscanf(string, "%d %d %d %d", &month, &day, &hour, &min);
+
+		if(return_input_date != 4 || strlen(string) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
+			if(!ask_if_enter_again()) {
+				string[0] = '\0';
+				return 0;
+			}
+			//If ask_if_enter_again does not return 0 then the user wants to re-enter the date
+			fprintf(stderr,"Please enter again the date \n");
+		}
+		else
+			format_date_ok = true;
+
+	} while(!format_date_ok);
+
+	return 1;
+}
+
+uint8_t ask_for_number_sat(void)
+{
+	uint8_t nb_sat = 0;
+	char char_nb_sat[NB_MAX_CHARACTERS]="";
+	bool input_nb_sat_ok = false;
+
+	while(!input_nb_sat_ok) {
+		fprintf(stderr,"Please enter the number of satellites: \n");
+		//%d cannot be used because recording on 32 bits instead of 8
+		input(char_nb_sat);
+		if(sscanf(char_nb_sat, "%"SCNu8, &nb_sat) != 1) {
+			if(!ask_if_enter_again())
+				return 0;
+		}
+
+		else
+			input_nb_sat_ok = true;
+	}
+	return nb_sat;
+}
+
+
+void input(char *string)
+{
+	/*this function is used to replace the \n by a \0 at the end of an entry.
+	 * This prevents missing an entry on the next request.*/
+
+    int i = 0;
+
+    if(fgets(string,NB_MAX_CHARACTERS,stdin) != NULL) {
+		for(i=0;i<=NB_MAX_CHARACTERS;i++) {
+			if(string[i] == '\n') {
+				string[i] = '\0';
+				break;
+			}
+		}
+    }
+}
+
+int ask_if_enter_again(void)
+{
+	bool input_start_again_ok = false;
+	char char_break_or_continue[NB_MAX_CHARACTERS]="";
+	while(!input_start_again_ok) {
+		fprintf(stderr,"error while typing, do you want to start over ? \n(press y or n) \n");
+		input(char_break_or_continue);
+		if(*char_break_or_continue == 'n')
+			return 0;
+		else if(*char_break_or_continue == 'y')
+			input_start_again_ok = true;
+	}
+	return 1;
+}
+
 
 

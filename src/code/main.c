@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 			infs=read_infos(argv[n]);
 			logfile(MAIN_PROCESS_NAME,"fork");
 			pid=fork();
-			//Si on est dans un process child alors on sort de la boucle pour ne pas créer de grandchild
+			//if it is a child process, exit from the loop so as not to create a grandchild process
 			if(pid == 0)
 				break;
 			else {
@@ -31,14 +31,22 @@ int main(int argc, char *argv[])
 		}
 	} else {
 		logfile(MAIN_PROCESS_NAME,"No input arguments, the user enters the information");
-		fprintf(stderr,"Please enter the number of satellites: \n");
-		//%d ne peut pas être utilisé car enregistre sur 32 bits au lieu de 8
-		scanf("%"SCNu8,&nb_sat);
+		nb_sat = ask_for_number_sat();
+
+		if(nb_sat == 0) {
+			fprintf(stderr,"Leaving the software \n");
+			return EXIT_SUCCESS;
+		}
+
 		for(i=0;i<nb_sat;i++) {
 			infs=manual_config();
+			if(infs.name[0] == '\0'|| infs.begin_date[0] == '\0' || infs.end_date[0] == '\0' || infs.freq == 0) {
+				fprintf(stderr,"Wrong input, leaving the software \n");
+				return EXIT_SUCCESS;
+			}
 			logfile(MAIN_PROCESS_NAME,"fork");
 			pid=fork();
-			//Si on est dans un process child alors on sort de la boucle pour ne pars créer de grandchild
+			//if it is a child process, exit from the loop so as not to create a grandchild process
 			if(pid == 0)
 				break;
 			else {
