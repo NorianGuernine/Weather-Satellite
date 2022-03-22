@@ -35,7 +35,7 @@ struct info_radio {
 };
 
 int read_infos(info_radio *, char *);
-info_radio manual_config(void);
+int manual_config(info_radio *);
 int record(void);
 int logfile(char *, char *);
 int send_queue(mqd_t, info_radio);

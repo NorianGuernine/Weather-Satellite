@@ -6,6 +6,7 @@ int main(int argc, char *argv[])
 	uint8_t nb_sat,i,n=0;
 	mqd_t mq;
 	pid_t pid;
+	int return_manual_config,return_read_infos = 0;
 
 	logfile(MAIN_PROCESS_NAME,"Opening the message queue");
 	mq=mq_open(QUEUE_NAME, O_WRONLY | O_CREAT, QUEUE_PRIORITY, NULL);
@@ -19,7 +20,11 @@ int main(int argc, char *argv[])
 		logfile(MAIN_PROCESS_NAME,"input arguments");
 		for(n=1;n<=argc;n++) {
 			logfile(MAIN_PROCESS_NAME,"Reading the parameters from the file");
-			infs=read_infos(argv[n]);
+			return_read_infos = read_infos(&infs,argv[n]);
+			if(return_read_infos < 0) {
+				fprintf(stderr,"An error has occured, leaving the software \n");
+				logfile(MAIN_PROCESS_NAME,"An error has occured, leaving the software \n");
+			}
 			logfile(MAIN_PROCESS_NAME,"fork");
 			pid=fork();
 			//if it is a child process, exit from the loop so as not to create a grandchild process
@@ -39,12 +44,12 @@ int main(int argc, char *argv[])
 		}
 
 		for(i=0;i<nb_sat;i++) {
-			infs=manual_config();
-			if(infs == 0) {
+			return_manual_config = manual_config(&infs);
+			if(return_manual_config == 0) {
 				fprintf(stderr,"Wrong input, leaving the software \n");
 				return EXIT_SUCCESS;
-			} else if(infs < 0) {
-				fprintf("An error has occured \n");
+			} else if(return_manual_config < 0) {
+				fprintf(stderr,"An error has occured \n");
 				return EXIT_FAILURE;
 			}
 			logfile(MAIN_PROCESS_NAME,"fork");

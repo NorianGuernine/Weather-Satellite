@@ -77,39 +77,38 @@ int read_infos(info_radio *infs, char *filename)
 	return EXIT_SUCCESS;
 }
 
-info_radio manual_config(void)
+int manual_config(info_radio *infos)
 {
-	info_radio infos;
 	char string[NB_MAX_CHARACTERS] = "";
 	bool good_frequency = false;
 	int return_date = 0;
 
 	do {
 		fprintf(stderr,"Please enter the name of the satellite \n");
-		if(input(infos.name,stdin) < 0) {
-			fprintf("Attempting to read name return null");
+		if(input(infos->name,stdin) < 0) {
+			fprintf(stderr,"Attempting to read name return null");
 			return -1;
 		}
 
-		if(strlen(infos.name) <= 1) {
+		if(strlen(infos->name) <= 1) {
 			fprintf(stderr,"Not enough characters \n");
 			if(!ask_if_enter_again()) {
-				infos.name[0] = '\0';
+				infos->name[0] = '\0';
 				return infos;
 			}
 		}
-	} while(strlen(infos.name) <= 1);
+	} while(strlen(infos->name) <= 1);
 
 	do {
 		fprintf(stderr, "Please enter the frequency \n");
 		if(input(string,stdin) < 0) {
-			fprintf("Attempting to read frequency return null");
+			fprintf(stderr,"Attempting to read frequency return null");
 			return -1;
 		}
-		if(sscanf(string, "%lu", &(infos.freq)) != 1) {
+		if(sscanf(string, "%lu", &(infos->freq)) != 1) {
 			fprintf(stderr,"Incorrect value \n");
 			if(ask_if_enter_again()) {
-				infos.freq = 0;
+				infos->freq = 0;
 				return infos;
 			}
 		}
@@ -118,7 +117,7 @@ info_radio manual_config(void)
 	} while(!good_frequency);
 
 	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin) \n");
-	return_date = ask_for_date(infos.begin_date);
+	return_date = ask_for_date(infos->begin_date);
 	if(return_date == 0)
 		return 0;
 	else if( return_date < 0) {
@@ -126,15 +125,13 @@ info_radio manual_config(void)
 		return -1;
 	}
 	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin) \n");
-	return_date = ask_for_date(infos.end_date);
-	if(return_date == 0)
-		return 0;
-	else if(return_date < 0) {
+	return_date = ask_for_date(infos->end_date);
+	if(return_date <= 0) {
 		fprintf(stderr,"Attempting to read date return null \n");
 		return -1;
 	}
 
-	return infos;
+	return 0;
 }
 int record(void)
 {
