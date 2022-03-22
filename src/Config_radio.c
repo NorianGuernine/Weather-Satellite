@@ -1,16 +1,17 @@
 #include "Config_radio.h"
 
-info_radio read_infos(char *filename)
+int read_infos(info_radio *infs, char *filename)
 {
-	/*Reading the file:
+	/*
+	 * Reading the file:
 	 * 1st line: satellite name
 	 * 2nd line: frequency
 	 * 3rd line: acquisition start date
-	 * 4th line: acquisition end date*/
+	 * 4th line: acquisition end date
+	 * */
 
 	FILE *fp;
-	char line[80] = {0};
-	info_radio infs;
+	char line[NB_MAX_CHARACTERS] = {0};
 	int return_input_date = 0;
 	int day, month, hour, min = 100;
 
@@ -20,60 +21,60 @@ info_radio read_infos(char *filename)
 	if (fp==NULL) {
 		logfile(MAIN_PROCESS_NAME,"Attempting to read parameter files returns null");
 		fprintf(stderr,"Attempting to read parameter files returns null\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-	if (fgets(infs.name, 80, fp) == NULL) {
+	if (input(infs->name,fp) < 0) {
 		logfile(MAIN_PROCESS_NAME,"Attempting to read name returns null");
 		fprintf(stderr,"Attempting to read name returns null\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-	if(strlen(infs.name) <= 1) {
+	if(strlen(infs->name) <= 1) {
 		logfile(MAIN_PROCESS_NAME,"Name for the file is too small");
-		fprintf(stderr,"Name for the file (%s) is too small\n",infs.name);
-		exit(EXIT_FAILURE);
+		fprintf(stderr,"Name for the file (%s) is too small\n",infs->name);
+		return -1;
 	}
 
-	if (fgets(line, 80, fp) == NULL) {
+	if (input(line,fp) < 0) {
 		logfile(MAIN_PROCESS_NAME,"Attempting to read frequency returns null");
 		fprintf(stderr,"Attempting to read frequency returns null\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
-	infs.freq=(unsigned long)atoi(line);
-	if (infs.freq == 0) {
+	infs->freq=(unsigned long)atoi(line);
+	if (infs->freq == 0) {
 		logfile(MAIN_PROCESS_NAME,"Frequency returns 0");
 		fprintf(stderr,"Frequency returns 0\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
-	if(fgets(infs.begin_date, 80, fp) == NULL) {
+	if(input(infs->begin_date,fp) < 0) {
 		logfile(MAIN_PROCESS_NAME,"Attempting to read start date returns null");
 		fprintf(stderr,"Attempting to read begin date returns null\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
-	return_input_date = sscanf(infs.begin_date, "%d %d %d %d", &month, &day, &hour, &min);
-	if(return_input_date != 4 || strlen(infs.begin_date) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
+	return_input_date = sscanf(infs->begin_date, "%d-%d-%d-%d", &month, &day, &hour, &min);
+	if(return_input_date != 4 || strlen(infs->begin_date) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
 		logfile(MAIN_PROCESS_NAME,"Wrong start date entered by user");
 		fprintf(stderr,"Wrong start date entered by user\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
-	if(fgets(infs.end_date, 11, fp) == NULL) {
+	if(input(infs->end_date,fp) < 0) {
 		logfile(MAIN_PROCESS_NAME,"Attempting to read end date returns null");
 		fprintf(stderr,"Attempting to read end date returns null\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
-	return_input_date = sscanf(infs.end_date, "%d %d %d %d", &month, &day, &hour, &min);
-	if(return_input_date != 4 || strlen(infs.end_date) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
+	return_input_date = sscanf(infs->end_date, "%d-%d-%d-%d", &month, &day, &hour, &min);
+	if(return_input_date != 4 || strlen(infs->end_date) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
 		logfile(MAIN_PROCESS_NAME,"Wrong end date entered by user");
 		fprintf(stderr,"Wrong end date entered by user\n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
 	fclose(fp);
-	return infs;
+	return EXIT_SUCCESS;
 }
 
 info_radio manual_config(void)
@@ -81,10 +82,14 @@ info_radio manual_config(void)
 	info_radio infos;
 	char string[NB_MAX_CHARACTERS] = "";
 	bool good_frequency = false;
+	int return_date = 0;
 
 	do {
 		fprintf(stderr,"Please enter the name of the satellite \n");
-		input(infos.name);
+		if(input(infos.name,stdin) < 0) {
+			fprintf("Attempting to read name return null");
+			return -1;
+		}
 
 		if(strlen(infos.name) <= 1) {
 			fprintf(stderr,"Not enough characters \n");
@@ -97,7 +102,10 @@ info_radio manual_config(void)
 
 	do {
 		fprintf(stderr, "Please enter the frequency \n");
-		input(string);
+		if(input(string,stdin) < 0) {
+			fprintf("Attempting to read frequency return null");
+			return -1;
+		}
 		if(sscanf(string, "%lu", &(infos.freq)) != 1) {
 			fprintf(stderr,"Incorrect value \n");
 			if(ask_if_enter_again()) {
@@ -110,9 +118,21 @@ info_radio manual_config(void)
 	} while(!good_frequency);
 
 	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin) \n");
-	ask_for_date(infos.begin_date);
+	return_date = ask_for_date(infos.begin_date);
+	if(return_date == 0)
+		return 0;
+	else if( return_date < 0) {
+		fprintf(stderr,"Attempting to read date return null \n");
+		return -1;
+	}
 	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin) \n");
-	ask_for_date(infos.end_date);
+	return_date = ask_for_date(infos.end_date);
+	if(return_date == 0)
+		return 0;
+	else if(return_date < 0) {
+		fprintf(stderr,"Attempting to read date return null \n");
+		return -1;
+	}
 
 	return infos;
 }
@@ -139,12 +159,12 @@ int record(void)
 	if(mq == (mqd_t) -1) {
 		perror("queue");
 		logfile(string_pid_number,strerror(errno));
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	if(mq_getattr(mq, & attr) != 0) {
 		perror("mq_getattr");
 		logfile(string_pid_number,strerror(errno));
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
 	logfile(string_pid_number,"Attempt to receive message queue with info_radio elements");
@@ -152,7 +172,7 @@ int record(void)
 	if(test_mq_receive < 0) {
 		perror("mq_receive");
 		logfile(string_pid_number,strerror(errno));
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	info_radio *infs = (info_radio *)buffer;
 	//This message to the log is saved in a variable to add the file name
@@ -168,14 +188,14 @@ int record(void)
 		if(errno != ENOENT) {
 			perror(SEMAPHORE_NAME);
 			logfile(string_pid_number,strerror(errno));
-			exit(EXIT_FAILURE);
+			return -1;
 		}
 	}
 	RTL2832U = sem_open(SEMAPHORE_NAME, O_RDWR | O_CREAT, SEMAPHORE_PERMISSION, 1);
 	if(RTL2832U == SEM_FAILED) {
 		perror(SEMAPHORE_NAME);
 		logfile(string_pid_number,strerror(errno));
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	logfile(string_pid_number,"Waiting for the semaphore");
 	sem_wait(RTL2832U);
@@ -202,31 +222,31 @@ int record(void)
 	if(python_name == NULL) {
 		fprintf(stderr,"pName in python (PyUnicode_FromString) configuration return NULL");
 		logfile(string_pid_number,"pName (PyUnicode_FromString) in python configuration return NULL");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	python_module = PyImport_Import(python_name);
 	if(python_module == NULL) {
 		fprintf(stderr,"pModule in python (PyImport_Import) configuration return NULL");
 		logfile(string_pid_number,"pModule in python (PyImport_Import) configuration return NULL");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	python_func = PyObject_GetAttrString(python_module, (char*)"main");
 	if(python_func == NULL) {
 		fprintf(stderr,"pFunc in python (PyObject_GetAttrString) configuration return NULL");
 		logfile(string_pid_number,"pFunc in python (PyObject_GetAttrString) configuration return NULL");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	python_args = Py_BuildValue("(ssi)",infs->name,infs->end_date,infs->freq);
 	if(python_args == NULL) {
 		fprintf(stderr,"pArgs in python (Py_BuildValue) configuration return NULL");
 		logfile(string_pid_number,"pArgs in python (Py_BuildValue) configuration return NULL");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	python_value = PyObject_CallObject(python_func, python_args);
 	if(python_value == NULL) {
 		fprintf(stderr,"pValue in python (PyObject_CallObject) configuration return NULL");
 		logfile(string_pid_number,"pValue in python (PyObject_CallObject) configuration return NULL");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	logfile(string_pid_number,"Stopping the python interpreter");
 	Py_Finalize();
@@ -269,7 +289,7 @@ int logfile(char * what_process, char * msg)
 	msg_to_write = (char *) malloc(size_msg * sizeof(char));
 	if(msg_to_write == NULL) {
 		fprintf(stderr,"Not enough memory for malloc \n");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	assert(msg_to_write != NULL);
 	sprintf(msg_to_write,"%s%s%s\n\n", date_logfile, what_process, msg);
@@ -285,14 +305,15 @@ int logfile(char * what_process, char * msg)
 	return EXIT_SUCCESS;
 }
 
-void send_queue(mqd_t mq, info_radio infs)
+int send_queue(mqd_t mq, info_radio infs)
 {
 	logfile(MAIN_PROCESS_NAME,"Attempt to send message queue infs");
 	if(mq_send(mq, (const char *) &infs, sizeof(infs), QUEUE_PRIORITY) != 0) {
 		perror("mq_send");
 		logfile(MAIN_PROCESS_NAME,strerror(errno));
-		exit(EXIT_FAILURE);
+		return -1;
 	}
+	return EXIT_SUCCESS;
 }
 
 int ask_for_date(char *string)
@@ -301,7 +322,10 @@ int ask_for_date(char *string)
 	int return_input_date = 0;
 	int day, month, hour, min = 100;
 	do {
-		input(string);
+		if(input(string,stdin) < 0) {
+			fprintf(stderr,"Attempting to read date return null \n");
+			return -1;
+		}
 		return_input_date = sscanf(string, "%d %d %d %d", &month, &day, &hour, &min);
 
 		if(return_input_date != 4 || strlen(string) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
@@ -329,7 +353,7 @@ uint8_t ask_for_number_sat(void)
 	while(!input_nb_sat_ok) {
 		fprintf(stderr,"Please enter the number of satellites: \n");
 		//%d cannot be used because recording on 32 bits instead of 8
-		input(char_nb_sat);
+		input(char_nb_sat,stdin);
 		if(sscanf(char_nb_sat, "%"SCNu8, &nb_sat) != 1) {
 			if(!ask_if_enter_again())
 				return 0;
@@ -342,21 +366,23 @@ uint8_t ask_for_number_sat(void)
 }
 
 
-void input(char *string)
+int input(char *string,FILE *stream)
 {
 	/*this function is used to replace the \n by a \0 at the end of an entry.
 	 * This prevents missing an entry on the next request.*/
 
     int i = 0;
 
-    if(fgets(string,NB_MAX_CHARACTERS,stdin) != NULL) {
-		for(i=0;i<=NB_MAX_CHARACTERS;i++) {
-			if(string[i] == '\n') {
-				string[i] = '\0';
-				break;
-			}
+    if(fgets(string,NB_MAX_CHARACTERS,stream) == NULL)
+    	return -1;
+
+	for(i=0;i<=NB_MAX_CHARACTERS;i++) {
+		if(string[i] == '\n') {
+			string[i] = '\0';
+			break;
 		}
-    }
+	}
+	return 0;
 }
 
 int ask_if_enter_again(void)
@@ -365,7 +391,7 @@ int ask_if_enter_again(void)
 	char char_break_or_continue[NB_MAX_CHARACTERS]="";
 	while(!input_start_again_ok) {
 		fprintf(stderr,"error while typing, do you want to start over ? \n(press y or n) \n");
-		input(char_break_or_continue);
+		input(char_break_or_continue,stdin);
 		if(*char_break_or_continue == 'n')
 			return 0;
 		else if(*char_break_or_continue == 'y')

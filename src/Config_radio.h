@@ -34,14 +34,14 @@ struct info_radio {
 	char end_date[NB_MAX_CHARACTERS];
 };
 
-info_radio read_infos(char *filename);
+int read_infos(info_radio *, char *);
 info_radio manual_config(void);
 int record(void);
 int logfile(char *, char *);
-void send_queue(mqd_t, info_radio);
+int send_queue(mqd_t, info_radio);
 uint8_t ask_for_number_sat(void);
 int ask_for_date(char *);
-void input(char *string);
+int input(char *, FILE *);
 int ask_if_enter_again(void);
 
 #endif /* CONFIG_RADIO_H_ */

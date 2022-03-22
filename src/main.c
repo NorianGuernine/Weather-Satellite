@@ -40,9 +40,12 @@ int main(int argc, char *argv[])
 
 		for(i=0;i<nb_sat;i++) {
 			infs=manual_config();
-			if(infs.name[0] == '\0'|| infs.begin_date[0] == '\0' || infs.end_date[0] == '\0' || infs.freq == 0) {
+			if(infs == 0) {
 				fprintf(stderr,"Wrong input, leaving the software \n");
 				return EXIT_SUCCESS;
+			} else if(infs < 0) {
+				fprintf("An error has occured \n");
+				return EXIT_FAILURE;
 			}
 			logfile(MAIN_PROCESS_NAME,"fork");
 			pid=fork();
