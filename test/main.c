@@ -118,6 +118,10 @@ void test_logfile(void)
 	reset_logfile();
 }
 
+void test_mq_send(void)
+{
+
+}
 
 void tear_down_input(void)
 {
