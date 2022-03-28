@@ -8,6 +8,8 @@ int read_infos(info_radio *infs, char *filename)
 	 * 2nd line: frequency
 	 * 3rd line: acquisition start date
 	 * 4th line: acquisition end date
+	 *
+	 * return 0 if success or -1 if error
 	 * */
 
 	FILE *fp;
@@ -79,6 +81,10 @@ int read_infos(info_radio *infs, char *filename)
 
 int manual_config(info_radio *infos)
 {
+	/*
+	 * Manual configuration of the radio tranceiver
+	 * returns 0 if success -1 if error
+	 */
 	char string[NB_MAX_CHARACTERS] = "";
 	bool good_frequency = false;
 	int return_date = 0;
@@ -93,8 +99,7 @@ int manual_config(info_radio *infos)
 		if(strlen(infos->name) <= 1) {
 			fprintf(stderr,"Not enough characters \n");
 			if(!ask_if_enter_again()) {
-				infos->name[0] = '\0';
-				return infos;
+				return -1;
 			}
 		}
 	} while(strlen(infos->name) <= 1);
@@ -107,9 +112,8 @@ int manual_config(info_radio *infos)
 		}
 		if(sscanf(string, "%lu", &(infos->freq)) != 1) {
 			fprintf(stderr,"Incorrect value \n");
-			if(ask_if_enter_again()) {
-				infos->freq = 0;
-				return infos;
+			if(!ask_if_enter_again()) {
+				return -1;
 			}
 		}
 		else
@@ -118,30 +122,32 @@ int manual_config(info_radio *infos)
 
 	fprintf(stderr,"Enter the date of revolution (format = mm-dd-hh-minmin) \n");
 	return_date = ask_for_date(infos->begin_date);
-	if(return_date == 0)
-		return 0;
-	else if( return_date < 0) {
-		fprintf(stderr,"Attempting to read date return null \n");
+	if( return_date < 0)
 		return -1;
-	}
+
 	fprintf(stderr,"Enter the date of end of revolution (format = mm-dd-hh-minmin) \n");
 	return_date = ask_for_date(infos->end_date);
-	if(return_date <= 0) {
-		fprintf(stderr,"Attempting to read date return null \n");
+	if(return_date < 0)
 		return -1;
-	}
 
-	return 0;
+
+	return EXIT_SUCCESS;
 }
+
 int record(void)
 {
+	/*
+	 * Launch Python software to record data with radio receiver
+	 * returns 0 if success -1 if error
+	 *
+	 */
 	char sys_date[16];
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 	mqd_t mq;
 	int test_mq_receive;
 	char buffer[SIZE_INFO_RADIO];
-	char msg_to_log[SIZE_MSG_TO_LOG];
+	char msg_to_log[NB_CHAR_MSG_AND_NAME];
 	char string_pid_number[10];
 	unsigned int priority;
 	struct mq_attr attr;
@@ -172,6 +178,7 @@ int record(void)
 		return -1;
 	}
 	info_radio *infs = (info_radio *)buffer;
+
 	//This message to the log is saved in a variable to add the file name
 	sprintf(msg_to_log,"This process write to the file %s", infs->name);
 	logfile(string_pid_number,msg_to_log);
@@ -181,6 +188,7 @@ int record(void)
 	logfile(string_pid_number,"Attempt to get acces to the semaphore");
 
 	RTL2832U = sem_open(SEMAPHORE_NAME, O_RDWR);
+
 	if(RTL2832U == SEM_FAILED) {
 		if(errno != ENOENT) {
 			perror(SEMAPHORE_NAME);
@@ -189,6 +197,7 @@ int record(void)
 		}
 	}
 	RTL2832U = sem_open(SEMAPHORE_NAME, O_RDWR | O_CREAT, SEMAPHORE_PERMISSION, 1);
+
 	if(RTL2832U == SEM_FAILED) {
 		perror(SEMAPHORE_NAME);
 		logfile(string_pid_number,strerror(errno));
@@ -257,6 +266,11 @@ int record(void)
 
 int logfile(char * what_process, char * msg)
 {
+	/*
+	 * record events in a log file.
+	 * returns 0 if success or -1 if error
+	 */
+
 	time_t t = time(NULL);
 	struct tm tm;
 	int logfile;
@@ -270,7 +284,7 @@ int logfile(char * what_process, char * msg)
 	lock.l_start = 0;
 	lock.l_len = 0;
 
-	logfile=open("Weather_sat.log", O_CREAT|O_WRONLY|O_APPEND);
+	logfile=open("Weather_sat.log", O_CREAT | O_WRONLY | O_APPEND, LOG_PERMISSION);
 
 	while(fcntl(logfile, F_SETLK, &lock) < 0)
 		if(errno != EINTR)
@@ -304,6 +318,10 @@ int logfile(char * what_process, char * msg)
 
 int send_queue(mqd_t mq, info_radio infs)
 {
+	/*
+	 * Send message with mq_send
+	 * returns 0 if success and -1 if error
+	 */
 	logfile(MAIN_PROCESS_NAME,"Attempt to send message queue infs");
 	if(mq_send(mq, (const char *) &infs, sizeof(infs), QUEUE_PRIORITY) != 0) {
 		perror("mq_send");
@@ -315,6 +333,12 @@ int send_queue(mqd_t mq, info_radio infs)
 
 int ask_for_date(char *string)
 {
+	/*
+	 * Ask the user for the date
+	 * return 0 if the date entered is in the correct format
+	 * return -1 if the date entered does not have the correct format and the user wants to leave
+	 */
+
 	bool format_date_ok = false;
 	int return_input_date = 0;
 	int day, month, hour, min = 100;
@@ -323,14 +347,13 @@ int ask_for_date(char *string)
 			fprintf(stderr,"Attempting to read date return null \n");
 			return -1;
 		}
-		return_input_date = sscanf(string, "%d %d %d %d", &month, &day, &hour, &min);
+		return_input_date = sscanf(string, "%d-%d-%d-%d", &month, &day, &hour, &min);
 
 		if(return_input_date != 4 || strlen(string) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
 			if(!ask_if_enter_again()) {
-				string[0] = '\0';
-				return 0;
+				return -1;
 			}
-			//If ask_if_enter_again does not return 0 then the user wants to re-enter the date
+			/* If ask_if_enter_again does not return -1 then the user wants to re-enter the date */
 			fprintf(stderr,"Please enter again the date \n");
 		}
 		else
@@ -338,11 +361,16 @@ int ask_for_date(char *string)
 
 	} while(!format_date_ok);
 
-	return 1;
+	return EXIT_SUCCESS;
 }
 
 uint8_t ask_for_number_sat(void)
 {
+	/*
+	 * Ask number of satellite to record
+	 * return 0 if bad input and the user wants to leave the software or return the number
+	 * of satellite if the input is good
+	 */
 	uint8_t nb_sat = 0;
 	char char_nb_sat[NB_MAX_CHARACTERS]="";
 	bool input_nb_sat_ok = false;
@@ -362,11 +390,11 @@ uint8_t ask_for_number_sat(void)
 	return nb_sat;
 }
 
-
 int input(char *string,FILE *stream)
 {
 	/*this function is used to replace the \n by a \0 at the end of an entry.
-	 * This prevents missing an entry on the next request.*/
+	 * This prevents missing an entry on the next request.
+	 * return 0 if success and -1 if stream is NULL*/
 
     int i = 0;
 
@@ -379,11 +407,15 @@ int input(char *string,FILE *stream)
 			break;
 		}
 	}
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 int ask_if_enter_again(void)
 {
+	/*
+	 * if bad input ask if leave the software or try to enter the input again
+	 * return 0 if the user want to leave the software or 1 if the user want to try again
+	 */
 	bool input_start_again_ok = false;
 	char char_break_or_continue[NB_MAX_CHARACTERS]="";
 	while(!input_start_again_ok) {

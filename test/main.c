@@ -9,14 +9,17 @@ void tear_down_read_infos(void);
 void test_read_infos(void);
 void remove_file(char *file_name);
 void test_input(void);
+void test_logfile(void);
+void remove_file(char *);
 void setup_input(void);
 void tear_down_input(void);
 
 int main(void)
 {
     UNITY_BEGIN();
-    RUN_TEST(test_read_infos);
     RUN_TEST(test_input);
+    RUN_TEST(test_logfile);
+    RUN_TEST(test_read_infos);
     return UNITY_END();
 }
 
@@ -80,6 +83,39 @@ void setup_input(void)
 	create_file("input_ok.txt", "Test input\n");
 	create_file("input_ok2.txt", "Test input without enter");
 	create_file("input_empty.txt", "");
+}
+
+void reset_logfile(void)
+{
+	remove_file("Weather_sat.log");
+}
+
+void test_logfile(void)
+{
+	char string[NB_MAX_CHARACTERS] = {0};
+	char date_logfile[SIZE_DATE_LOGFILE] = {0};
+	char expected_msg[NB_MAX_CHARACTERS] = {0};
+	FILE *fp = NULL;
+	time_t t = time(NULL);
+	struct tm tm;
+
+	reset_logfile();
+	/* Test creation of file */
+	TEST_ASSERT_EQUAL_INT(0, logfile("[Test] ","test"));
+
+	/* Test of content of Weather_sat.log */
+	fp = fopen("Weather_sat.log","r");
+	input(string,fp);
+	/* Read the date to compare it later in the string assert */
+	tm = *localtime(&t);
+
+	sprintf(date_logfile,"[%02d:%02d:%02d:%02d] ",tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
+	strcpy(expected_msg,date_logfile);
+	strcat(expected_msg,"[Test] test");
+
+	TEST_ASSERT_EQUAL_STRING(expected_msg,string);
+
+	reset_logfile();
 }
 
 

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 			logfile(MAIN_PROCESS_NAME,"Reading the parameters from the file");
 			return_read_infos = read_infos(&infs,argv[n]);
 			if(return_read_infos < 0) {
-				fprintf(stderr,"An error has occured, leaving the software \n");
+				fprintf(stderr,"Leaving the software \n");
 				logfile(MAIN_PROCESS_NAME,"An error has occured, leaving the software \n");
 			}
 			logfile(MAIN_PROCESS_NAME,"fork");
@@ -45,11 +45,9 @@ int main(int argc, char *argv[])
 
 		for(i=0;i<nb_sat;i++) {
 			return_manual_config = manual_config(&infs);
-			if(return_manual_config == 0) {
-				fprintf(stderr,"Wrong input, leaving the software \n");
-				return EXIT_SUCCESS;
-			} else if(return_manual_config < 0) {
-				fprintf(stderr,"An error has occured \n");
+
+		if(return_manual_config < 0) {
+				fprintf(stderr,"Leaving the software \n");
 				return EXIT_FAILURE;
 			}
 			logfile(MAIN_PROCESS_NAME,"fork");

@@ -14,8 +14,8 @@
 #include <semaphore.h>
 #include <fcntl.h>
 
-#define NB_MAX_CHARACTERS 30
-#define SIZE_MSG_TO_LOG 61
+#define NB_MAX_CHARACTERS 150
+#define NB_CHAR_MSG_AND_NAME 181 // NB_MAX_CHARACTERS + 31 which is the number of char in the sprintf msg
 #define SIZE_DATE_LOGFILE 18
 #define SIZE_INFO_RADIO 95
 #define QUEUE_NAME "/radio_parameters"
@@ -24,7 +24,7 @@
 #define MAIN_PROCESS_NAME "[main] "
 #define QUEUE_PRIORITY 0644
 #define SEMAPHORE_PERMISSION 0666
-#define LOG_PERMISSION 0644
+#define LOG_PERMISSION 0777
 
 typedef struct info_radio info_radio;
 struct info_radio {
