@@ -5,7 +5,6 @@ from gnuradio.filter import firdes
 from gnuradio import analog
 import time
 import osmosdr
-import signal
 import datetime
 
 class Meteo_sat(gr.top_block):

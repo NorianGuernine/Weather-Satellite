@@ -1,4 +1,7 @@
-#include "Config_radio.h"
+#include "config_radio.h"
+
+/* Cannot give argument to signal function, for this case global variable seems to be an acceptable solution */
+sig_atomic_t sig_child = 0;
 
 int read_infos(info_radio *infs, char *filename)
 {
@@ -264,6 +267,72 @@ int record(void)
 	return EXIT_SUCCESS;
 }
 
+int check_if_param(char *string)
+{
+	/* return 1 if input is parameter, 0 if not
+	 * return -1 if error */
+	char param[3];
+
+	if(string == NULL)
+		return -1;
+	
+	if( strlen(string) > 2 )
+		return 0;
+	sscanf(string,"%s",param);
+	if( strcmp(param,"-w") == 0 )
+		return 1;
+	else
+		return 0;
+}
+
+int ask_for_watchdog(void)
+{
+	char string[NB_MAX_CHARACTERS] = "";
+
+	while( true ) { // TODO: find better option than while true
+		fprintf(stderr, "Would you like to set a watchdog ? (press y or n) \n");
+		if( input(string,stdin) < 0) {
+			fprintf(stderr,"Attempting to read answer return null");
+			return -1;
+		}
+
+		if( strcmp(string,"y") == 0 )
+			return 1;
+		else if( strcmp(string,"n") == 0 )
+			return 0;
+		else
+		       	if ( !ask_if_enter_again() )
+				return -1;
+	}
+}
+
+uint32_t set_watchdog(void)
+{
+	char string[NB_MAX_CHARACTERS] = "";
+	uint32_t watchdog = 0;
+
+	while(true) { //TODO: find better option than while true
+		fprintf(stderr,"Please enter the watchdog value \n");
+		
+		if( input(string,stdin) < 0) {
+			fprintf(stderr,"Attempting to read watchdog return null");
+			return 0;
+		}
+
+		if(sscanf(string, "%u",&watchdog ) != 1) {
+			fprintf(stderr,"Incorrect value \n");
+			if(!ask_if_enter_again()) {
+				return 0;
+			}
+		}
+
+		if( watchdog < 1 ) 
+			fprintf(stderr,"Incorrect value for watchdog \n");
+		else
+			return watchdog;
+	}
+}
+
 int logfile(char * what_process, char * msg)
 {
 	/*
@@ -350,9 +419,9 @@ int ask_for_date(char *string)
 		return_input_date = sscanf(string, "%d-%d-%d-%d", &month, &day, &hour, &min);
 
 		if(return_input_date != 4 || strlen(string) != 11 || month < 1 || month > 12 || day < 1 || day > 31 || hour > 24 || min > 60) {
-			if(!ask_if_enter_again()) {
+			if(!ask_if_enter_again())
 				return -1;
-			}
+
 			/* If ask_if_enter_again does not return -1 then the user wants to re-enter the date */
 			fprintf(stderr,"Please enter again the date \n");
 		}
@@ -401,7 +470,7 @@ int input(char *string,FILE *stream)
     if(fgets(string,NB_MAX_CHARACTERS,stream) == NULL)
     	return -1;
 
-	for(i=0;i<=NB_MAX_CHARACTERS;i++) {
+    for(i=0;i<=NB_MAX_CHARACTERS;i++) {
 		if(string[i] == '\n') {
 			string[i] = '\0';
 			break;
@@ -427,6 +496,11 @@ int ask_if_enter_again(void)
 			input_start_again_ok = true;
 	}
 	return 1;
+}
+
+void catch_child_signal(int signum)
+{
+	sig_child = 1;
 }
 
 
