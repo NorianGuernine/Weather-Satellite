@@ -5,7 +5,7 @@ This is a tool for retrieving images sent by radio from weather satellites.
 
 ### Harware
 This program has been tested with a DVB-T COFDM rtl2832U demodulator and a dipole antenna.
-I also made a system image for a Raspberry pi 4 with yocto. The system image is available in the src folder.
+I also made a system image for a Raspberry pi 4 with yocto.
 
 | ![RTL2832U](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/rtl2832U.jpg "RTL2832U") |  ![antenna](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/V-dipole.png "antenna") |
 | :-: | :-: |
@@ -20,6 +20,7 @@ Create a file for each recording you want to make. The file must contain the fol
 * frequency in Hz
 * Recording start date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
 * Recording end date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
+
 ex:
 
 ```
