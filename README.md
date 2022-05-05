@@ -65,7 +65,7 @@ You can compile the software for your Ubuntu machine using the makefile present 
 
 ## How to use the project
 
-### Harware
+### Hardware
 This program has been tested with a DVB-T COFDM rtl2832U demodulator and a dipole antenna.
 I also made a system image for a Raspberry pi 4 with yocto.
 
