@@ -133,7 +133,11 @@ int main(int argc, char *argv[])
 			if( watchdog > 0 ) {
 				if( time_since_beginning / 60 == watchdog ) {
 					logfile(MAIN_PROCESS_NAME,"Watchdog, the system will now power off");
+					reboot(LINUX_REBOOT_CMD_POWER_OFF);
 				}
+			} else if ( nb_process_alive == 0 ) {
+				logfile(MAIN_PROCESS_NAME,"No more recording, the system will now power off");
+				reboot(LINUX_REBOOT_CMD_POWER_OFF);
 			}
 			sleep(1);
 			time_since_beginning++;

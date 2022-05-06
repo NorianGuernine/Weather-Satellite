@@ -14,6 +14,8 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
+#include <linux/reboot.h>
 
 #define NB_MAX_CHARACTERS 150
 #define NB_CHAR_MSG_AND_NAME 181 // NB_MAX_CHARACTERS + 31 which is the number of char in the sprintf msg
@@ -49,5 +51,5 @@ int ask_for_date(char *);
 int input(char *, FILE *);
 int ask_if_enter_again(void);
 void catch_child_signal(int);
-
+int reboot(int);	//the linux/reboot.h header file doesn't include a function definition for reboot
 #endif /* CONFIG_RADIO_H_ */
