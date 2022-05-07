@@ -137,12 +137,18 @@ Enter the end date of the revolution (format = mm-dd-hh-minmin-ss)
 
 The parent process creates a child process for each record and uses a message queue to send them their parameters.
 
+![step1](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/step1.png)
+
 When the recording time is reached and if the rtl2832U board is available, the child process starts recording.
 When recording is complete, the child process terminates.
+
+![step2](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/step2.png)
 
 The parent process detects the end of a child process by capturing the SIGCHLD signal.
 
 When all child processes are finished then the parent process powers off the system.
+
+![step3](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/step3.png)
 
 A log file is generated during the use of the software allowing you to know what happened during the recording.
 
