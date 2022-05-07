@@ -37,7 +37,7 @@ You can find the Linux image for the raspberry pi 4 in the image folder.
 
 ```
 norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ sudo sh
-norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ bzcat radio-image-raspberrypi4-64-20220422203653.rootfs.wic.bz2 > /dev/sda
+norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ bzcat radio-image-raspberrypi4-64-20220507193544.rootfs.wic.bz2 > /dev/sda
 ```
 ## Connection to the raspberry pi 4 by UART
 
@@ -66,6 +66,7 @@ You can compile the software for your Ubuntu machine using the makefile present 
 ## How to use the project
 
 ### Hardware
+
 This program has been tested with a DVB-T COFDM rtl2832U demodulator and a dipole antenna.
 I also made a system image for a Raspberry pi 4 with yocto.
 
@@ -77,7 +78,8 @@ I also made a system image for a Raspberry pi 4 with yocto.
 ### How to use this software
 
 #### First way
-Create a file for each recording you want to make. The file must contain the following elements:
+
+Create a file for each recording you want to make on your raspberry. The file must contain the following elements:
 * name
 * frequency in Hz
 * Recording start date in format month, day, hour, minute, seconde (mm-dd-hh-mm-ss)
@@ -93,20 +95,28 @@ noaa19
 02-13-08-31-00
 02-13-08-37-00
 
-norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio noaa19
+norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio-exec noaa19
 ```
 
+You can also add a watchdog in minute to make sure raspberry pi power off:
+```
+norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio-exec noaa19 -w 36000
+```
 #### Second way 
 
-Just launch the software and follow the instructions:
+Just launch the software on your raspberry and follow the instructions:
 
 ```
-norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio
+norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio-exec
 Please enter the number of satellites: 
 2
+Would you like to set a watchdog ? (press y or n) 
+y
+Please enter the watchdog value (in minutes)
+600
 Please enter the name of the satellite 
 noaa19
-Please enter the frequency 
+Please enter the frequency (in Hz)
 137910000
 Enter the start date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-08-31-00
@@ -115,7 +125,7 @@ Enter the end date of the revolution (format = mm-dd-hh-minmin-ss)
 
 Please enter the name of the satellite 
 noaa18
-Please enter the frequency 
+Please enter the frequency (in Hz)
 137912500
 Enter the start date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-10-16-00
@@ -123,20 +133,16 @@ Enter the end date of the revolution (format = mm-dd-hh-minmin-ss)
 02-13-10-29-00
 ```
 
-#### Watchdog
+#### Running of the software
 
-You can add a watchdog in minute to make sure raspberry pi power off:
+The parent process creates a child process for each record and uses a message queue to send them their parameters.
 
-```
-norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio -w 36000
-```
-or
+When the recording time is reached and if the rtl2832U board is available, the child process starts recording.
+When recording is complete, the child process terminates.
 
-```
-norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio noaa19 -w 36000
-```
+The parent process detects the end of a child process by capturing the SIGCHLD signal.
 
-#### Logfile
+When all child processes are finished then the parent process powers off the system.
 
 A log file is generated during the use of the software allowing you to know what happened during the recording.
 
