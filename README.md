@@ -1,6 +1,8 @@
 # What is the project weather satellite ?
 
-It is a tool allowing to automate in a simple way the recovery of satellite images.
+This is a tool that automates image retrieval that weather satellites send by radio.
+
+The goal of this project is to help radio amateurs who are just starting out to collect satellite images.
 
 **Example of images retrieved :**
  
@@ -63,9 +65,9 @@ The login is root.
 
 You can compile the software for your Ubuntu machine using the makefile present in the src folder.
 
-## How to use the project
+# How to use the project
 
-### Hardware
+## Hardware
 
 This program has been tested with a DVB-T COFDM rtl2832U demodulator and a dipole antenna.
 I also made a system image for a Raspberry pi 4 with yocto.
@@ -75,9 +77,9 @@ I also made a system image for a Raspberry pi 4 with yocto.
 |     | Here is a [link](https://lna4all.blogspot.com/2017/02/diy-137-mhz-wx-sat-v-dipole-antenna.html) to the antenna image blog |
 
 
-### How to use this software
+## How to use this software
 
-#### First way
+### First way
 
 Create a file for each recording you want to make on your raspberry. The file must contain the following elements:
 * name
@@ -102,7 +104,7 @@ You can also add a watchdog in minute to make sure raspberry pi power off:
 ```
 norian@norian-HP-Pavilion:~/Documents/github/Weather-Satellite$ radio-exec noaa19 -w 36000
 ```
-#### Second way 
+### Second way 
 
 Just launch the software on your raspberry and follow the instructions:
 
@@ -132,8 +134,28 @@ Enter the start date of the revolution (format = mm-dd-hh-minmin-ss)
 Enter the end date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-10-29-00
 ```
+### How to retrieve information from a satellite? (frequency, date of passage ect...)
 
-#### Running of the software
+You can retrieve the information needed to configure the software using gpredict.
+
+![gpredict](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/gpredict.png)
+
+Go to Files -> New Module.
+
+![module](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/module.png)
+
+Add the satellites you want to listen to and validate. / ! \ For the moment only communications by the APT standard are supported by my project.
+
+Right-click on the satellite you want to listen to and select Future Passages.
+
+You then see the start date of the pass, the end date and the maximum elevation for the pass of the satellite.
+
+![infos_sat](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/infos_satellites.png)
+
+To obtain the listening frequency, double click on the satellite and go to the Transponders menu.
+
+![apt_infos](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/apt_infos.png)
+# Running of the software
 
 The parent process creates a child process for each record and uses a message queue to send them their parameters.
 
