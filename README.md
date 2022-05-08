@@ -142,9 +142,9 @@ You can retrieve the information needed to configure the software using gpredict
 
 Go to Files -> New Module.
 
-![module](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/module.png)
-
 Add the satellites you want to listen to and validate. / ! \ For the moment only communications by the APT standard are supported by my project.
+
+![module](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/module.png)
 
 Right-click on the satellite you want to listen to and select Future Passages.
 
