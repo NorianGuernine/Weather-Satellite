@@ -142,7 +142,7 @@ You can retrieve the information needed to configure the software using gpredict
 
 Go to Files -> New Module.
 
-Add the satellites you want to listen to and validate. / ! \ For the moment only communications by the APT standard are supported by my project.
+Add the satellites you want to listen to and validate. / ! \ For the moment only communications by FM modulation are supported by my project. My project has only been tested with satellites communicating with the APT standard.
 
 ![module](https://github.com/NorianGuernine/Weather-Satellite/blob/main/Pictures/module.png)
 
