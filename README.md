@@ -134,6 +134,8 @@ Enter the start date of the revolution (format = mm-dd-hh-minmin-ss)
 Enter the end date of the revolution (format = mm-dd-hh-minmin-ss) 
 02-13-10-29-00
 ```
+
+At the end of the recording a wav file is generated. You can then convert the file to an image with the wxtoimg software.
 ### How to retrieve information from a satellite? (frequency, date of passage ect...)
 
 You can retrieve the information needed to configure the software using gpredict.
